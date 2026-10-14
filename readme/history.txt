@@ -1,4 +1,7 @@
 2026.10.09
+* we got rid of some of the libraries; now the list of languages is stored inside the plugin
+
+2026.10.09
 * the necessary libraries are now included in the plugin itself, so that the plugin works out of the box on any operating system
 
 2026.10.09
