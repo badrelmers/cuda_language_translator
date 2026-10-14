@@ -4,11 +4,9 @@ from cudatext import *
 from pathlib import Path
 import sys
 import urllib.request, urllib.parse, json
+from .libs import pyperclip
 from cudax_lib import get_translation
 _ = get_translation(__file__)
-
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'libs'))
-import pyperclip
 
 class Command:
     def __init__(self):
