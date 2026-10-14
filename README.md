@@ -1,3 +1,3 @@
 # cuda_language_translator
 
-Translation of texts through the Googletrans (https://pypi.org/project/googletrans/)
+Translation of texts through the https://translate.googleapis.com

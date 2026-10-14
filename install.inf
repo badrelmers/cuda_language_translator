@@ -1,6 +1,6 @@
 [info]
 title=Language Translator
-desc=Translation of texts through the Googletrans (https://pypi.org/project/googletrans/)
+desc=Translation of texts through the https://translate.googleapis.com
 type=cudatext-plugin
 subdir=cuda_language_translator
 homepage=https://github.com/ildarkhasanshin/cuda_language_translator
