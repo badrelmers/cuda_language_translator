@@ -2,87 +2,27 @@ import os
 import platform
 from cudatext import *
 from pathlib import Path
-import json
+import sys
+import urllib.request, urllib.parse, json
 import asyncio
 from cudax_lib import get_translation
 _ = get_translation(__file__)
 
-install_first = ''
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'libs'))
 
-try:
-    from googletrans import Translator, constants
-    googletrans_imported = True
-except:
-    googletrans_imported = False
-    install_first += '\npip install -U googletrans'
-
-try:
-    import httpx
-    httpx_imported = True
-except:
-    httpx_imported = False
-    install_first += '\npip install httpx'
-
-try:
-    from httpx_curl_cffi import AsyncCurlTransport
-    httpx_curl_cffi_imported = True
-except:
-    httpx_curl_cffi_imported = False
-    install_first += '\npip install httpx_curl_cffi'
-
-try:
-    import pyperclip
-    pyperclip_imported = True
-except:
-    pyperclip_imported = False
-    install_first += '\npip install pyperclip'
-    if platform.system() == 'Linux':
-        install_first += '\nsudo apt-get install xsel'
-
-if install_first:
-    msg_box(_('Install first') + ': ' + install_first, MB_OK + MB_ICONERROR)
+from googletrans import Translator, constants
+import pyperclip
 
 class Command:
     def __init__(self):
         self.conf_file = Path(app_path(APP_DIR_SETTINGS)) / 'cuda_language_translator.json'
-        self.translator = Translator(
-            service_urls=["translate.googleapis.com"],
-            raise_exception=True,
-        )
-        self.original_client = self.translator.client
+        self.translator = Translator()
         self.languages = constants.LANGUAGES
         self.target_lang = 'en'
 
-    async def translate(self, text, target_lang):
+    def translate(self, text, target_lang):
         if text:
-            try:
-                transport = AsyncCurlTransport(
-                    impersonate="chrome",
-                    default_headers=True,
-                )
-                self.translator.client = httpx.AsyncClient(
-                    transport=transport,
-                    headers={
-                        "User-Agent": (
-                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                            "AppleWebKit/537.36 (KHTML, like Gecko) "
-                            "Chrome/140.0.0.0 Safari/537.36"
-                        ),
-                    },
-                )
-                self.translator.token_acquirer.client = self.translator.client
-                translated = await self.translator.translate(
-                    text,
-                    dest=target_lang,
-                )
-            except Exception as e:
-                print("error:")
-                print(type(e), e)
-            finally:
-                await self.translator.client.aclose()
-                await self.original_client.aclose()
-
-            return translated.text
+            return "".join(p[0] for p in json.loads(urllib.request.urlopen(urllib.request.Request("https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl="+target_lang+"&dt=t&q="+urllib.parse.quote(text),headers={"User-Agent":"Mozilla/5.0"})).read())[0])
 
         return None
 
@@ -96,49 +36,38 @@ class Command:
 
         return None
 
-    async def translate_with_selection(self):
-        if googletrans_imported and httpx_imported and httpx_curl_cffi_imported:
-            selected_lang = self.show_language_menu()
-            if selected_lang:
-                txt = ed.get_text_sel()
-                if len(txt) > 0:
-                    translated = await self.translate(txt, selected_lang)
-                    return translated
+    def translate_with_selection(self):
+        selected_lang = self.show_language_menu()
+        if selected_lang:
+            txt = ed.get_text_sel()
+            if len(txt) > 0:
+                return self.translate(txt, selected_lang)
 
         return None
 
     def res2tab(self):
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        translated = loop.run_until_complete(self.translate_with_selection())
+        translated = self.translate_with_selection()
         if translated:
             file_open('')
             ed.set_text_all(translated)
             self.actc(translated)
 
     def res2msgbox(self):
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        translated = loop.run_until_complete(self.translate_with_selection())
+        translated = self.translate_with_selection()
         if translated:
             msg_box(translated, MB_OK + MB_ICONINFO)
             self.actc(translated)
 
     def res2clipboard(self):
-        if pyperclip_imported:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            translated = loop.run_until_complete(self.translate_with_selection())
-            if translated:
-                pyperclip.copy(translated)
-                msg_status('Googletrans Language Translator: ' + _('translated text copied to clipboard.'))
+        translated = self.translate_with_selection()
+        if translated:
+            pyperclip.copy(translated)
+            msg_status('Language Translator: ' + _('translated text copied to clipboard.'))
 
     def res2statusbar(self):
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        translated = loop.run_until_complete(self.translate_with_selection())
+        translated = self.translate_with_selection()
         if translated:
-            msg_status('Googletrans Language Translator: ' + translated)
+            msg_status('Language Translator: ' + translated)
             self.actc(translated)
 
     def config(self):
@@ -161,4 +90,4 @@ class Command:
     def actc(self, translated):
         if self.check_option('automatic copy to clipboard'):
             pyperclip.copy(translated)
-            msg_status('Googletrans Language Translator: ' + _('translated text copied to clipboard (option: automatic copy to clipboard).'))
+            msg_status('Language Translator: ' + _('translated text copied to clipboard (option: automatic copy to clipboard).'))
