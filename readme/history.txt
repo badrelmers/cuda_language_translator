@@ -1,4 +1,7 @@
-2026.10.09
+2026.10.14
+* different google-apis are now being used to avoid "429: too many requests"-errors: thx @badrelmers
+
+2026.10.14
 * we got rid of some of the libraries; now the list of languages is stored inside the plugin
 
 2026.10.09
