@@ -1,3 +1,3 @@
 # cuda_language_translator
 
-Translation of texts through the https://translate.googleapis.com
+Plugin for CudaText: translation of texts through Google-API

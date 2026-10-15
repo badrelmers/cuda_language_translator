@@ -1,5 +1,5 @@
 Plugin for CudaText.
-Translation of texts through the https://translate.googleapis.com
+Translation of texts through Google-API
 
 Authors:
 	ildar r. khasanshin (github.com/ildarkhasanshin)
