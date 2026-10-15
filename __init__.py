@@ -12,6 +12,12 @@ _ = get_translation(__file__)
 class Command:
     def __init__(self):
         self.conf_file = Path(app_path(APP_DIR_SETTINGS)) / 'cuda_language_translator.json'
+        if self.conf_file.exists() == False:
+            with self.conf_file.open(mode='w', encoding='utf-8') as f:
+                json.dump({
+                    'automatic copy to clipboard': 0
+                }, f, indent=2)
+        #
         self.languages = {'abk':'abkhaz','ace':'acehnese','ach':'acholi','aar':'afar','af':'afrikaans','sq':'albanian','alz':'alur','am':'amharic','ar':'arabic','hy':'armenian','as':'assamese','ava':'avar','awa':'awadhi','ay':'aymara','az':'azerbaijani','ban':'balinese','bal':'baluchi','bm':'bambara','bci':'baoulé','bak':'bashkir','eu':'basque','btx':'batak karo','bts':'batak simalungun','bbc':'batak toba','be':'belarusian','bem':'bemba','bn':'bengali','bew':'betawi','bho':'bhojpuri','bik':'bikol','bs':'bosnian','bre':'breton','bg':'bulgarian','bua':'buryat','yue':'cantonese','ca':'catalan','ceb':'cebuano','cha':'chamorro','che':'chechen','zh':'chinese','zh-cn':'chinese (simplified)','zh-tw':'chinese (traditional)','chk':'chuukese','chv':'chuvash','co':'corsican','crh':'crimean tatar','hr':'croatian','cs':'czech','da':'danish','fa-af':'dari','dv':'dhivehi','din':'dinka','doi':'dogri','dom':'dombe','nl':'dutch','dyu':'dyula','dzo':'dzongkha','en':'english','eo':'esperanto','et':'estonian','fao':'faroese','fij':'fijian','fil':'filipino (tagalog)','fi':'finnish','fon':'fon','fr':'french','fy':'frisian','fur':'friulian','ful':'fulani','gaa':'ga','gl':'galician','ka':'georgian','de':'german','el':'greek','gn':'guarani','gu':'gujarati','ht':'haitian creole','cnh':'hakha chin','ha':'hausa','haw':'hawaiian','he':'hebrew','iw':'hebrew','hil':'hiligaynon','hi':'hindi','hmn':'hmong','hu':'hungarian','hrx':'hunsrik','iba':'iban','is':'icelandic','ig':'igbo','ilo':'ilocano','id':'indonesian','ga':'irish','it':'italian','jam':'jamaican patois','ja':'japanese','jv':'javanese','jw':'javanese','kac':'jingpo','kal':'kalaallisut','kn':'kannada','kau':'kanuri','pam':'kapampangan','kk':'kazakh','kha':'khasi','km':'khmer','cgg':'kiga','kik':'kikongo','rw':'kinyarwanda','ktu':'kituba','trp':'kokborok','kom':'komi','gom':'konkani','ko':'korean','kri':'krio','ku':'kurdish','ckb':'kurdish (sorani)','ky':'kyrgyz','lo':'lao','ltg':'latgalian','la':'latin','lv':'latvian','lij':'ligurian','lim':'limburgish','ln':'lingala','lt':'lithuanian','lmo':'lombard','lg':'luganda','luo':'luo','lb':'luxembourgish','mk':'macedonian','mad':'madurese','mai':'maithili','mak':'makassar','mg':'malagasy','ms':'malay','ms-arab':'malay (jawi)','ml':'malayalam','mt':'maltese','mam':'mam','glv':'manx','mi':'maori','mr':'marathi','mah':'marshallese','mwr':'marwadi','mfe':'mauritian creole','mhr':'meadow mari','mni-mtei':'meiteilon (manipuri)','min':'minang','lus':'mizo','mn':'mongolian','my':'myanmar (burmese)','nhe':'nahuatl (eastern huasteca)','ndc-zw':'ndau','nde':'ndebele (south)','new':'nepalbhasa (newari)','ne':'nepali','no':'norwegian','nus':'nuer','ny':'nyanja (chichewa)','oci':'occitan','or':'odia (oriya)','om':'oromo','oss':'ossetian','pag':'pangasinan','pap':'papiamento','ps':'pashto','fa':'persian','pl':'polish','por':'portuguese (portugal)','pt':'portuguese (portugal,brazil)','pa':'punjabi','pa-arab':'punjabi (shahmukhi)','kek':"q'eqchi'",'qu':'quechua','rom':'romani','ro':'romanian','run':'rundi','ru':'russian','sme':'sami (north)','sm':'samoan','sag':'sango','sa':'sanskrit','sat':'santali','gd':'scots gaelic','nso':'sepedi','sr':'serbian','st':'sesotho','crs':'seychellois creole','shn':'shan','sn':'shona','scn':'sicilian','szl':'silesian','sd':'sindhi','si':'sinhala (sinhalese)','sk':'slovak','sl':'slovenian','so':'somali','es':'spanish','su':'sundanese','sus':'susu','sw':'swahili','ssw':'swati','sv':'swedish','tl':'tagalog (filipino)','tah':'tahitian','tg':'tajik','ber-atn':'tamazight','ber':'tamazight (tifinagh)','ta':'tamil','tt':'tatar','te':'telugu','tet':'tetum','th':'thai','bod':'tibetan','ti':'tigrinya','tiv':'tiv','tpi':'tok pisin','ton':'tongan','ts':'tsonga','tsn':'tswana','tcy':'tulu','tum':'tumbuka','tr':'turkish','tk':'turkmen','tuk':'tuvan','ak':'twi (akan)','udm':'udmurt','uk':'ukrainian','ur':'urdu','ug':'uyghur','uz':'uzbek','ven':'venda','vec':'venetian','vi':'vietnamese','war':'waray','cy':'welsh','wol':'wolof','xh':'xhosa','sah':'yakut','yi':'yiddish','yo':'yoruba','yua':'yucatec maya','zap':'zapotec','zu':'zulu'}
 
     def translate(self, text, target_lang):
@@ -163,12 +169,32 @@ class Command:
         return None
 
     def show_language_menu(self):
-        langs = '\n' . join([f"{code}: {name}" for code, name in self.languages.items()])
+        lang1 = self.load_option('languages')
+        if lang1:
+            lang1__ = {}
+            for lang1_ in lang1:
+                key = lang1_.strip()
+                val = self.languages[lang1_.strip()]
+                lang1__[key] = val
+            #
+            lang2 = self.languages
+            lang2__ = {}
+            for code, name in lang2.items():
+                if not code in lang1__:
+                    lang2__[code] = name
+            langs = '\n' . join([f"{code}: {name}" for code, name in lang1__.items()]) + '\n--\n'
+            langs += '\n' . join([f"{code}: {name}" for code, name in lang2__.items()])
+            #
+            langs_ = lang1__ | {'--': '--'} | lang2__
+        else:
+            langs = '\n' . join([f"{code}: {name}" for code, name in self.languages.items()])
+            langs_ = self.languages
         res = dlg_menu(DMENU_LIST, langs, 0, _('Select target language'))
         if res is not None:
-            return list(self.languages.keys())[res]
+            self.save_option('languages', list(langs_.keys())[res])
+            return list(langs_.keys())[res]
 
-        return 'en'
+        return False
 
     def translate_with_selection(self):
         selected_lang = self.show_language_menu()
@@ -205,23 +231,42 @@ class Command:
             self.actc(translated)
 
     def config(self):
-        if self.conf_file.exists() == False:
-            with self.conf_file.open(mode='w', encoding='utf-8') as f:
-                json.dump({'automatic copy to clipboard': 0}, f, indent=2)
         file_open(str(self.conf_file))
 
-    def check_option(self, option):
+    def load_option(self, option):
         data = {}
         if self.conf_file.exists():
             with self.conf_file.open(encoding='utf-8') as f:
                 data = json.load(f)
-        for param, val in data.items():
-            if (param == option and val == 1):
-                return True
+            for param, val in data.items():
+                if (param == option):
+                    return val
+
+        return False
+
+    def save_option(self, key_, val_):
+        data = {}
+        if self.conf_file.exists():
+            with self.conf_file.open(encoding='utf-8') as f:
+                data = json.load(f)
+                if key_ in data:
+                    vals = []
+                    if isinstance(data[key_], list):
+                        for i in data[key_]:
+                            vals.append(i)
+                    else:
+                        vals.append(data[key_])
+                    vals.append(val_)
+                    vals = list(set(vals))
+                    data.update({key_:vals})
+                else:
+                    data.update({key_:[val_]})
+            with self.conf_file.open(mode='w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2)
 
         return False
 
     def actc(self, translated):
-        if self.check_option('automatic copy to clipboard'):
+        if self.load_option('automatic copy to clipboard') == 1:
             pyperclip.copy(translated)
             msg_status('Language Translator: ' + _('translated text copied to clipboard (option: automatic copy to clipboard).'))
